@@ -1,6 +1,6 @@
 {
   "name": "string-from-object",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "stringFromObject; similar to console.dir, although more rim/yaml-like",
   "main": "index.js",
   "scripts": {
