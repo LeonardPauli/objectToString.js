@@ -2,7 +2,7 @@
   "name": "string-from-object",
   "version": "1.0.0",
   "description": "stringFromObject; similar to console.dir, although more rim/yaml-like",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
     "once": "babel-node src/example.js",
     "dev": "nodemon -q src/example.js --exec babel-node",
