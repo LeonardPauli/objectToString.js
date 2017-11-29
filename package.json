@@ -1,0 +1,37 @@
+{
+  "name": "string-from-object",
+  "version": "1.0.0",
+  "description": "stringFromObject; similar to console.dir, although more rim/yaml-like",
+  "main": "src/index.js",
+  "scripts": {
+    "once": "babel-node src/example.js",
+    "dev": "nodemon -q src/example.js --exec babel-node",
+    "debug": "nodemon src/example.js --exec babel-node --inspect",
+    "build": "babel src/index.js -o index.js",
+    "lint:raw": "eslint --fix --ignore-pattern '!.eslintrc.js'",
+    "lint": "eslint --fix --ignore-pattern '!.eslintrc.js' 'src/*.js'",
+    "lint:nofix": "eslint --ignore-pattern '!.eslintrc.js' 'src/*.js'",
+    "lint:watch": "onchange 'src/*.js' -d 200 -w -- yarn lint:raw {{changed}}"
+  },
+  "author": "Leonard Pauli",
+  "licence": "MIT",
+  "engines": {
+    "node": ">=6.11.0",
+    "npm": ">=3.10.10",
+    "yarn": ">=0.27.5"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^7.2.3",
+    "babel-preset-flow": "^6.23.0",
+    "babel-preset-react-native-stage-0": "^1.0.1",
+    "cross-env": "^4.0.0",
+    "eslint": "^4.6.1",
+    "eslint-plugin-babel": "^4.1.2",
+    "eslint-plugin-flowtype": "^2.39.1",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-jsx-a11y": "^6.0.2",
+    "eslint-plugin-react": "^7.3.0",
+    "onchange": "^3.2.1"
+  }
+}
