@@ -16,7 +16,9 @@ if(isObject&&!keepCollapsed)opt.keepCollapsed.push(obj);
 var getObjectName=function getObjectName(obj){
 if(obj.toString===[].toString)return'Array';
 var objOrFunc=typeof obj=='object'||typeof obj=='function';
-var objStr=objOrFunc&&typeof obj.name=='string'&&obj.name||
+var objStr=
+objOrFunc&&typeof obj.name=='string'&&obj.name||
+objOrFunc&&objOrFunc.constructor&&typeof obj.constructor.name=='string'&&obj.constructor.name||
 obj.toString&&obj.toString()||
 typeof obj;
 return objStr;
@@ -37,7 +39,8 @@ return'\x1B[32m'+obj.replace(/\n/g,'\n'+prefix)+'\x1B[0m';
 
 
 if(typeof obj==='function')
-return'\x1B[36m'+(obj+'').split('\n')[0].replace(/function (.*) {/ig,'$1=> ...')+'\x1B[0m';
+return'\x1B[36m'+(obj+'').split('\n')[0].replace(/function ?(.*) ?{ ?(return ?)?(.*?)(;})?$/ig,
+function(_,argsStr,ret,content,ended){return argsStr+'=> '+(ret?'':'{ ')+content+(ended?ret?'':' }':'...');})+'\x1B[0m';
 
 
 if(typeof obj==='undefined')
