@@ -16,7 +16,9 @@ const stringFromObject = (obj, depth=1, options={}, prefix='')=> {
 	const getObjectName = obj=> {
 		if (obj.toString === [].toString) return 'Array'
 		const objOrFunc = typeof obj == 'object' || typeof obj == 'function'
-		const objStr = (objOrFunc && typeof obj.name == 'string' && obj.name)
+		const objStr =
+				 (objOrFunc && typeof obj.name == 'string' && obj.name)
+			|| (objOrFunc && objOrFunc.constructor && typeof obj.constructor.name == 'string' && obj.constructor.name)
 			|| (obj.toString && obj.toString())
 			|| typeof obj
 		return objStr
@@ -37,7 +39,8 @@ const stringFromObject = (obj, depth=1, options={}, prefix='')=> {
 
 		// function
 		if (typeof obj === 'function')
-			return `\x1b[36m${(obj+'').split('\n')[0].replace(/function (.*) {/ig, '$1=> ...')}\x1b[0m`
+			return `\x1b[36m${(obj+'').split('\n')[0].replace(/function ?(.*) ?{ ?(return ?)?(.*?)(;})?$/ig,
+				(_, argsStr, ret, content, ended)=> `${argsStr}=> `+(ret?'':'{ ')+content+(ended?ret?'':' }':'...'))}\x1b[0m`
 
 		// undefined or null
 		if (typeof obj === 'undefined')
