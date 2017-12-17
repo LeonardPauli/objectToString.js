@@ -3,6 +3,7 @@
   "version": "1.0.3",
   "description": "stringFromObject; similar to console.dir, although more rim/yaml-like",
   "main": "index.js",
+  "url": "https://github.com/LeonardPauli/stringFromObject.js",
   "scripts": {
     "once": "babel-node src/example.js",
     "dev": "nodemon -q src/example.js --exec babel-node",
