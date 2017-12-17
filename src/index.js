@@ -23,6 +23,8 @@ const stringFromObject = (obj, depth=1, options={}, prefix='')=> {
 		keepCollapsed: [],
 		maxObjectStringLength: 100,
 		indentation: '  ',
+		parent: null,
+		filter: null, // ({key, value, name, enumerable, parent})=> true
 	}, options)
 	const {indentation, maxObjectStringLength} = opt
 
@@ -92,8 +94,13 @@ const stringFromObject = (obj, depth=1, options={}, prefix='')=> {
 	const name = getObjectName(obj)
 
 	return (name || '')+propertyNames.map(k=> {
-		const color = keys.indexOf(k)==-1? 2: 33+(depth%4)
-		const content = stringFromObject(obj[k], depth-1, opt, prefix+indentation)
+		const enumerable = keys.indexOf(k)>=0
+		const parent = opt.parent || {value: obj, enumerable: true}
+		const line = {key: k, value: obj[k], name, enumerable, parent}
+		if (opt.filter && !opt.filter(line)) return ''
+
+		const color = enumerable? 33+(depth%4): 2
+		const content = stringFromObject(obj[k], depth-1, {...opt, parent: line}, prefix+indentation)
 		return `\n${prefix}\x1b[${color}m${k}: \x1b[0m${content}`
 	}).join('')
 }

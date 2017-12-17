@@ -22,7 +22,9 @@ var stringFromObject=function stringFromObject(obj){var depth=arguments.length>1
 var opt=_extends({
 keepCollapsed:[],
 maxObjectStringLength:100,
-indentation:'  '},
+indentation:'  ',
+parent:null,
+filter:null},
 options);var
 indentation=opt.indentation,maxObjectStringLength=opt.maxObjectStringLength;
 
@@ -92,8 +94,13 @@ if(!propertyNames.length)return'{}';
 var name=getObjectName(obj);
 
 return(name||'')+propertyNames.map(function(k){
-var color=keys.indexOf(k)==-1?2:33+depth%4;
-var content=stringFromObject(obj[k],depth-1,opt,prefix+indentation);
+var enumerable=keys.indexOf(k)>=0;
+var parent=opt.parent||{value:obj,enumerable:true};
+var line={key:k,value:obj[k],name:name,enumerable:enumerable,parent:parent};
+if(opt.filter&&!opt.filter(line))return'';
+
+var color=enumerable?33+depth%4:2;
+var content=stringFromObject(obj[k],depth-1,_extends({},opt,{parent:line}),prefix+indentation);
 return'\n'+prefix+'\x1B['+color+'m'+k+': \x1B[0m'+content;
 }).join('');
 };exports.default=
