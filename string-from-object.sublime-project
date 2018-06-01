@@ -33,7 +33,7 @@
 		"lint_mode": "background",
 		"linters": {
 			"eslint": {
-				"@disable": true,
+				"@disable": false,
 				"args": [
 					"-c", "${project}/../module/.eslintrc",
 				],

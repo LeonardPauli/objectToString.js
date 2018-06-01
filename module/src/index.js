@@ -1,5 +1,5 @@
-// stringFromObject
-// created by Leonard Pauli, 2017
+// string-from-object
+// created by Leonard Pauli, 2017-2018
 //
 
 // colors
@@ -17,93 +17,106 @@
 // })()
 
 
-// stringFromObject; similar to console.dir, although more rim/yaml-like
-const stringFromObject = (obj, depth=1, options={}, prefix='')=> {
+// stringFromObject
+const stringFromObject = (obj, ...opts)=> {
+	const defaultDepth = typeof opts[0]==='number'? opts.shift(): 1
 	const opt = Object.assign({
-		keepCollapsed: [],
 		maxObjectStringLength: 100,
 		indentation: '  ',
-		parent: null,
 		filter: null, // ({key, value, name, enumerable, parent})=> true
-	}, options)
-	const {indentation, maxObjectStringLength} = opt
+		// changing:
+		itemsToCollapse: [],
+		prefix: '',
+		parent: null,
+		depth: defaultDepth,
+		collapse: false,
+	}, opts.shift() || {})
 
-	// only same object expand once
+	// expand same object only once
 	const isObject = typeof obj==='object'
-	const keepCollapsed = isObject && opt.keepCollapsed.indexOf(obj)>=0
-	if (isObject && !keepCollapsed) opt.keepCollapsed.push(obj)
+	opt.collapse = isObject && opt.itemsToCollapse.indexOf(obj)>=0
+	if (isObject && !opt.collapse) opt.itemsToCollapse.push(obj)
 
-	// render object name
-	const getObjectName = obj=> {
-		if (obj.toString === [].toString) return 'Array'
-		const objOrFunc = typeof obj == 'object' || typeof obj == 'function'
-		const objStr
-			= (objOrFunc && typeof obj.name == 'string' && obj.name)
-			|| (objOrFunc && objOrFunc.constructor
-				&& typeof obj.constructor.name == 'string'
-				&& obj.constructor.name)
-			|| (obj.toString && obj.toString())
-			|| typeof obj
-		return objStr
-		// const useObjStr = objStr!=='[object Object]'
-		// return useObjStr? objStr.replace(/\n(.| |\n)*$/, '...'): null
-	}
+	const expandLimitReached = opt.depth==0 || !isObject || opt.collapse || !obj
+	if (expandLimitReached) return valueFinal(obj, opt)
 
-	// when value shouldn't be futher expanded
-	if (depth==0 || !isObject || keepCollapsed || !obj) {
-
-		// primitive
-		if (typeof obj === 'number' || typeof obj === 'boolean')
-			return `\x1b[33m${obj}\x1b[0m`
-
-		// string
-		if (typeof obj === 'string')
-			return `\x1b[32m${obj.replace(/\n/g, '\n'+prefix)}\x1b[0m`
-
-		// function
-		if (typeof obj === 'function') {
-			const regex = /function ?(.*) ?{ ?(return ?)?(.*?)(;})?$/ig
-			const title = (obj+'').split('\n')[0].replace(regex, (_, argsStr, ret, content, ended)=>
-				`${argsStr}=> `+(ret?'':'{ ')+content+(ended?ret?'':' }':'...'))
-			return `\x1b[36m${title}\x1b[0m`
-		}
-
-		// undefined or null
-		if (typeof obj === 'undefined')
-			return '\x1b[2mundefined\x1b[0m'
-		if (obj === null)
-			return '\x1b[2mnull\x1b[0m'
-
-		// othervise; object
-		try {
-			const name = getObjectName(obj)
-			const str = (keepCollapsed || name?'-> ':'')
-				+ (name || JSON.stringify(obj))
-			if (str.length>maxObjectStringLength)
-				return str.substr(0, maxObjectStringLength-3)+'...'
-			return str
-		} catch (err) {
-			return (keepCollapsed?'-> ':'')+obj
-		}
-	}
-
-	// if value might be futher expanded
-	const keys = Object.keys(obj)
-	const propertyNames = Object.getOwnPropertyNames(obj)
-	if (!propertyNames.length) return '{}'
 	const name = getObjectName(obj)
+	const rest = fixForPropertyNames(obj, opt)
+	return name + (rest.length? rest: ': {}')
+}
 
-	return (name || '')+propertyNames.map(k=> {
+
+const fixForPropertyNames = (obj, opt)=> {
+	const {prefix, indentation, depth} = opt
+	const keys = Object.keys(obj)
+	return Object.getOwnPropertyNames(obj).map(k=> {
 		const enumerable = keys.indexOf(k)>=0
 		const parent = opt.parent || {value: obj, enumerable: true}
 		const line = {key: k, value: obj[k], name, enumerable, parent}
 		if (opt.filter && !opt.filter(line)) return ''
 
 		const color = enumerable? 33+(depth%4): 2
-		const content = stringFromObject(obj[k], depth-1, {...opt, parent: line}, prefix+indentation)
+		const content = stringFromObject(obj[k], depth-1, {...opt, parent: line, prefix: prefix+indentation})
 		return `\n${prefix}\x1b[${color}m${k}: \x1b[0m${content}`
 	}).join('')
 }
 
+
+// valueFinal
+const valueFinal = (obj, opt)=>
+	primitiveFix(obj)
+	|| stringFix(obj, opt)
+	|| functionFix(obj)
+	|| voidOrNullFix(obj)
+	|| objectFix(obj, opt)
+	|| ''
+
+const primitiveFix = o=> typeof o === 'number' || typeof o === 'boolean'
+	? `\x1b[33m${o}\x1b[0m` : null
+
+const stringFix = (o, {prefix})=> typeof o === 'string'
+	? `\x1b[32m${o.replace(/\n/g, '\n'+prefix)}\x1b[0m` : null
+
+const functionFix = o=> typeof o === 'function' ? (()=> {
+	const regex = /function ?(.*) ?{ ?(return ?)?(.*?)(;})?$/ig
+	const title = (o+'').split('\n')[0].replace(regex, (_, argsStr, ret, content, ended)=>
+		`${argsStr}=> `+(ret?'':'{ ')+content+(ended?ret?'':' }':'...'))
+	return `\x1b[36m${title}\x1b[0m`
+})() : null
+
+const voidOrNullFix = o=> typeof obj === 'undefined'
+	? '\x1b[2mundefined\x1b[0m'
+	: o === null ? '\x1b[2mnull\x1b[0m' : null
+
+const objectFix = (obj, opt)=> {
+	// if (typeof obj !== 'object') return null
+	try {
+		const name = getObjectName(obj)
+		const str = (opt.collapse || name?'-> ':'') + (name || JSON.stringify(obj))
+		return limitStr(opt.maxObjectStringLength)(str)
+	} catch (err) {
+		const str = (opt.collapse?'-> ':'') + String(obj)
+		return limitStr(opt.maxObjectStringLength)(str)
+	}
+}
+
+
+const getObjectName = o=> {
+	const objOrFunc = typeof o == 'object' || typeof o == 'function'
+	return (o.toString === [].toString && 'Array')
+		|| (objOrFunc && typeof o.name == 'string' && o.name)
+		|| (objOrFunc && o.constructor && typeof o.constructor.name == 'string' && o.constructor.name)
+		|| (o.toString && o.toString())
+		|| typeof o
+}
+
+
+const limitStr = n=> s=> s.length > n ? s.substr(0, n-3) + '...' : s
+
+
+// export
 export default stringFromObject
-export const log = (obj, depth=5, opt)=> console.log(stringFromObject(obj, depth, opt))
+export const log = (obj, ...opts)=> {
+	const depth = typeof opts[0]==='number'? opts.shift(): 5
+	console.log(stringFromObject(obj, depth, opts.shift() || {}))
+}

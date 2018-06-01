@@ -2,14 +2,16 @@
 ' LeonardPauli/string-from-object
 	Created by Leonard Pauli, 1 jun 2018
 
-rebase with js-module-base
-	- mv string-from-object string-from-object-old
-	- web name="string-from-object"
-	- web project_title="$name"
-	- web description_shorter="neatly formatted, indentation based presentation of js object, handles circular structures, depth levels, + logs with color"
-	- author_line="Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.com)"
-	- copyright_holder="Leonard Pauli"
-	- base_location="$lpdocs/app/js/module/base"
-	- "$base_location"/docs/instantiate.sh $name && cd $_
-	- see base-setup
+// rebase with js-module-base
+	// - mv string-from-object string-from-object-old
+	// - web name="string-from-object"
+	// - web project_title="$name"
+	// - web description_shorter="neatly formatted, indentation based presentation of js object, handles circular structures, depth levels, + logs with color"
+	// - author_line="Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.com)"
+	// - copyright_holder="Leonard Pauli"
+	// - base_location="$lpdocs/app/js/module/base"
+	// - "$base_location"/docs/instantiate.sh $name && cd $_
+	// - see base-setup
+	// - fix minor things
+	// - npm publish 1.1.0
 	
