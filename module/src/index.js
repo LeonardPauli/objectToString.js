@@ -22,8 +22,9 @@ const stringFromObject = (obj, ...opts)=> {
 	const defaultDepth = typeof opts[0]==='number'? opts.shift(): 1
 	const opt = Object.assign({
 		maxObjectStringLength: 100,
-		indentation: '  ',
+		indentation: '\t',
 		filter: null, // ({key, value, name, enumerable, parent})=> true
+		colors: false,
 		// changing:
 		itemsToCollapse: [],
 		prefix: '',
@@ -31,6 +32,8 @@ const stringFromObject = (obj, ...opts)=> {
 		depth: defaultDepth,
 		collapse: false,
 	}, opts.shift() || {})
+	const {colors} = opt
+	opt.cw = opt.cw || (c=> s=> colors? colorWrap(c)(s): s)
 
 	// expand same object only once
 	const isObject = typeof obj==='object'
@@ -56,37 +59,38 @@ const fixForPropertyNames = (obj, opt)=> {
 		if (opt.filter && !opt.filter(line)) return ''
 
 		const color = enumerable? 33+(depth%4): 2
-		const content = stringFromObject(obj[k], depth-1, {...opt, parent: line, prefix: prefix+indentation})
-		return `\n${prefix}\x1b[${color}m${k}: \x1b[0m${content}`
+		const content = stringFromObject(obj[k], {...opt, depth: depth-1, parent: line, prefix: prefix+indentation})
+		return '\n' + prefix + opt.cw(color)(`${k}: `) + content
 	}).join('')
 }
 
 
 // valueFinal
 const valueFinal = (obj, opt)=>
-	primitiveFix(obj)
+	primitiveFix(obj, opt)
 	|| stringFix(obj, opt)
-	|| functionFix(obj)
-	|| voidOrNullFix(obj)
+	|| functionFix(obj, opt)
+	|| voidOrNullFix(obj, opt)
 	|| objectFix(obj, opt)
 	|| ''
 
-const primitiveFix = o=> typeof o === 'number' || typeof o === 'boolean'
-	? `\x1b[33m${o}\x1b[0m` : null
+const primitiveFix = (o, {cw})=> typeof o === 'number' || typeof o === 'boolean'
+	? cw(33)(String(o)) : null
 
-const stringFix = (o, {prefix})=> typeof o === 'string'
-	? `\x1b[32m${o.replace(/\n/g, '\n'+prefix)}\x1b[0m` : null
+const stringFix = (o, {prefix, cw})=> typeof o === 'string'
+	? cw(32)(o.replace(/\n/g, '\n'+prefix)) : null
 
-const functionFix = o=> typeof o === 'function' ? (()=> {
-	const regex = /function ?(.*) ?{ ?(return ?)?(.*?)(;})?$/ig
-	const title = (o+'').split('\n')[0].replace(regex, (_, argsStr, ret, content, ended)=>
-		`${argsStr}=> `+(ret?'':'{ ')+content+(ended?ret?'':' }':'...'))
-	return `\x1b[36m${title}\x1b[0m`
-})() : null
+const functionFix = (o, {cw})=> typeof o === 'function'
+	? cw(36)((o+'').split('\n')[0].replace(
+		/function ?(.*) ?{ ?(return ?)?(.*?)(;})?$/ig,
+		(_, argsStr, ret, content, ended)=>
+			`${argsStr}=> `+(ret?'':'{ ')+content+(ended?ret?'':' }':'...')))
+	: null
 
-const voidOrNullFix = o=> typeof obj === 'undefined'
-	? '\x1b[2mundefined\x1b[0m'
-	: o === null ? '\x1b[2mnull\x1b[0m' : null
+const voidOrNullFix = (o, {cw})=> typeof o === 'undefined'
+	? cw(2)('undefined')
+	: o === null ? cw(2)('null')
+		: null
 
 const objectFix = (obj, opt)=> {
 	// if (typeof obj !== 'object') return null
@@ -112,11 +116,14 @@ const getObjectName = o=> {
 
 
 const limitStr = n=> s=> s.length > n ? s.substr(0, n-3) + '...' : s
+const colorWrap = (c = false)=> s=> c===false? s: `\x1b[${c}m${s}\x1b[0m`
 
 
 // export
 export default stringFromObject
-export const log = (obj, ...opts)=> {
-	const depth = typeof opts[0]==='number'? opts.shift(): 5
-	console.log(stringFromObject(obj, depth, opts.shift() || {}))
-}
+export const log = (obj, ...opts)=> console.log(stringFromObject(obj, {
+	indentation: '\t',
+	colors: true,
+	depth: typeof opts[0]==='number'? opts.shift(): 5,
+	...opts.shift() || {}}
+))
