@@ -1,14 +1,14 @@
-# {{=${project_title:-Project Title} }}
-*{{=${description_shorter:-description} }}*
+# string-from-object
+*neatly formatted, indentation based presentation of js object, handles circular structures, depth levels, + logs with color*
 
-{{="$'\n'$'\n'"${example_text:-_bold_ *italic* [link](https://example.com) \`code\`} }}
+__for usage, see [./module/\_\_tests\_\_](./module/__tests__)__
  
 
 ### Contribute
 
 Feel free to fork and send PR's :)
 
-Copyright © {{=${copyright_holder:-Leonard Pauli} }}, {{=${copyright_year:-2018} }}
+Copyright © Leonard Pauli, 2017-2018
 
-Licence: {{=${licence_short:-GNU Affero General Public License v3.0 or later}.}}
-{{="$'\n'"${licence_note:-For commersial / closed-source / custom licencing needs, please contact us.} }}
+Licence: GNU Affero General Public License v3.0 or later.
+For commersial / closed-source / custom licencing needs, please contact us.

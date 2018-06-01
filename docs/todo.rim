@@ -1,28 +1,15 @@
 # docs/todo
-' LeonardPauli/js-module-base
-	Created by Leonard Pauli, 27 may 2018
+' LeonardPauli/string-from-object
+	Created by Leonard Pauli, 1 jun 2018
 
-// js-module-base
-	// - create + mod setup docs based on lp-vue-base
-		// - base-setup-from-scratch.rim
-		// - base-setup.rim
-		// - vue-base-setup-from-scratch.rim
-		// - vue-base-setup.rim
-	// - follow base-setup-from-scratch.rim to create js-module-base repo in $lpdocs/files/
-		// - ln -s module/README.md README.md
-		// - AGPL by default, incl. LICENCE file
-
-	// - add simple module starting-point
-	// - add testing with jest
-	// - move to $lpdocs/app/node/module/base
-	// - document npm publish + scope
-
-	// test:
-		// - linting + watch lint, etc
-		// - npm publish
-		// - instantiate.sh
+rebase with js-module-base
+	- mv string-from-object string-from-object-old
+	- web name="string-from-object"
+	- web project_title="$name"
+	- web description_shorter="neatly formatted, indentation based presentation of js object, handles circular structures, depth levels, + logs with color"
+	- author_line="Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.com)"
+	- copyright_holder="Leonard Pauli"
+	- base_location="$lpdocs/app/js/module/base"
+	- "$base_location"/docs/instantiate.sh $name && cd $_
+	- see base-setup
 	
-	// - commit
-
-' TODO:
-	- container for dev

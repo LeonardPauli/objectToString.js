@@ -1,7 +1,7 @@
 {
-	"name": "js-module-base",
+	"name": "string-from-object",
 	"version": "0.1.0",
-	"description": "",
+	"description": "neatly formatted, indentation based presentation of js object, handles circular structures, depth levels, + logs with color",
 	"main": "index.js",
 	"scripts": {
 		"test:coverage": "jest --coverage",
@@ -13,7 +13,7 @@
 		"build": "f () { ([ -d lib ] && rm -rf lib); babel src -d lib --copy-files --include-dotfiles --source-maps ${1:---retain-lines --minified}; }; f"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.me)",
 	"private": true,
 	"license": "AGPL-3.0-or-later",
 	"files": [
