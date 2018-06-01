@@ -13,8 +13,9 @@
 		"build": "f () { ([ -d lib ] && rm -rf lib); babel src -d lib --copy-files --include-dotfiles --source-maps ${1:---retain-lines --minified}; }; f"
 	},
 	"keywords": [],
+	"repository": "github:LeonardPauli/string-from-object",
 	"author": "Leonard Pauli <leonardpauli@me.com> (https://leonardpauli.me)",
-	"private": true,
+	"private": false,
 	"license": "AGPL-3.0-or-later",
 	"files": [
 		"lib/",

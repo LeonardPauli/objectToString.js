@@ -24,6 +24,7 @@ const stringFromObject = (obj, ...opts)=> {
 		maxObjectStringLength: 100,
 		indentation: '\t',
 		filter: null, // ({key, value, name, enumerable, parent})=> true
+		nameExtractor: null, // obj=> obj.mySpecialKey or null to continue as usual,
 		colors: false,
 		// changing:
 		itemsToCollapse: [],
@@ -43,13 +44,13 @@ const stringFromObject = (obj, ...opts)=> {
 	const expandLimitReached = opt.depth==0 || !isObject || opt.collapse || !obj
 	if (expandLimitReached) return valueFinal(obj, opt)
 
-	const name = getObjectName(obj)
-	const rest = fixForPropertyNames(obj, opt)
-	return name + (rest.length? rest: ': {}')
+	const name = getObjectName(obj, opt)
+	const rest = fixForPropertyNames(obj, opt, name)
+	return limitStr(opt.maxObjectStringLength)(name.replace(/(\n|\t| )+/g, ' ')) + (rest.length? rest: '')
 }
 
 
-const fixForPropertyNames = (obj, opt)=> {
+const fixForPropertyNames = (obj, opt, name)=> {
 	const {prefix, indentation, depth} = opt
 	const keys = Object.keys(obj)
 	return Object.getOwnPropertyNames(obj).map(k=> {
@@ -95,7 +96,7 @@ const voidOrNullFix = (o, {cw})=> typeof o === 'undefined'
 const objectFix = (obj, opt)=> {
 	// if (typeof obj !== 'object') return null
 	try {
-		const name = getObjectName(obj)
+		const name = getObjectName(obj, opt)
 		const str = (opt.collapse || name?'-> ':'') + (name || JSON.stringify(obj))
 		return limitStr(opt.maxObjectStringLength)(str)
 	} catch (err) {
@@ -105,9 +106,10 @@ const objectFix = (obj, opt)=> {
 }
 
 
-const getObjectName = o=> {
+const getObjectName = (o, {nameExtractor} = {})=> {
 	const objOrFunc = typeof o == 'object' || typeof o == 'function'
-	return (o.toString === [].toString && 'Array')
+	return (nameExtractor && nameExtractor(o))
+		|| (o.toString === [].toString && 'Array')
 		|| (objOrFunc && typeof o.name == 'string' && o.name)
 		|| (objOrFunc && o.constructor && typeof o.constructor.name == 'string' && o.constructor.name)
 		|| (o.toString && o.toString())

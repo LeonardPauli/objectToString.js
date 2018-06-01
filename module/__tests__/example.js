@@ -121,4 +121,20 @@ erik: Erik
 anna: -> Anna`)
 	})
 
+	it('name from class', ()=> {
+		class MyThing {}
+		const o = {value: new MyThing()}
+		expect(sfo(o, 5)).toBe(`Object
+value: MyThing`)
+	})
+
+	it('custom nameExtractor', ()=> {
+		const o = {value: {'<class>': 'MyThing', name: 'something else'}}
+		// though will take name if nameExtractor returns null?
+		expect(sfo(o, 5, {nameExtractor: o=> o && o['<class>']})).toBe(`Object
+value: MyThing
+	<class>: MyThing
+	name: something else`)
+	})
+
 })
