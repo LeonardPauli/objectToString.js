@@ -25,11 +25,11 @@ describe('log', ()=> {
 				'\nFusce dapibus, tellus ac cursus commodo, tortor mauris'+
 				'\nFusce dapibus, tellus ac cursus commodo, tortor mauris',
 			list: [7, 9, 't', ()=> 'do some'],
-			myFun () { 'doSome' },
+			myFun () { this.a = 'do some' },
 			t: new Thing(),
 		}
 
-		expect(sfo(o, 5)).toBe(`theO
+		expect(sfo(o, 5, {singlelineLengthMax: 0, listItemIndicator: false, listItemIndicatorIndex: true})).toBe(`theO
 name: theO
 value: 3
 likeIt: true
@@ -43,9 +43,8 @@ list: Array
 	0: 7
 	1: 9
 	2: t
-	3: () => { ...
-	length: 4
-myFun: myFun() => { ...
+	3: () => 'do some'
+myFun: myFun() => { this.a = 'do some' }
 t: Thing
 	prop: value`)
 	})
@@ -72,7 +71,7 @@ primitiveFloat: 12.1234567
 primitiveTrue: true
 primitiveFalse: false
 string: hello
-functionDouble: functionDouble(x) => { ...
+functionDouble: functionDouble(x) => x * 2
 voidOrNullUndefined: undefined
 voidOrNullVoid: undefined
 voidOrNullNull: null
@@ -81,12 +80,12 @@ objectEmpty: -> Object`)
 
 	it('depth', ()=> {
 		const o = {lvl: 0, o: {lvl: 1, o: {lvl: 2, o: {lvl: 3, o: {lvl: 4, o: {lvl: 5, o: null}}}}}}
-		expect(sfo(o, {depth: 2})).toBe(`Object
+		expect(sfo(o, {depth: 2, singlelineLengthMax: 0})).toBe(`Object
 lvl: 0
 o: Object
 	lvl: 1
 	o: -> Object`)
-		expect(sfo(o, {depth: 3})).toBe(`Object
+		expect(sfo(o, {depth: 3, singlelineLengthMax: 0})).toBe(`Object
 lvl: 0
 o: Object
 	lvl: 1
@@ -98,7 +97,7 @@ o: Object
 	it('repeating + name', ()=> {
 		const color = {name: 'Red', hex: '#ff0000'}
 		const o = {first: {color}, second: {color}}
-		expect(sfo(o, 5)).toBe(`Object
+		expect(sfo(o, 5, {singlelineLengthMax: 0})).toBe(`Object
 first: Object
 	color: Red
 		name: Red
@@ -112,7 +111,7 @@ second: Object
 		const anna = {name: 'Anna', friend: erik}
 		erik.friend = anna
 		const o = {erik, anna}
-		expect(sfo(o, 5)).toBe(`Object
+		expect(sfo(o, 5, {singlelineLengthMax: 0})).toBe(`Object
 erik: Erik
 	name: Erik
 	friend: Anna
@@ -124,7 +123,7 @@ anna: -> Anna`)
 	it('name from class', ()=> {
 		class MyThing {}
 		const o = {value: new MyThing()}
-		expect(sfo(o, 5)).toBe(`Object
+		expect(sfo(o, 5, {singlelineLengthMax: 0})).toBe(`Object
 value: MyThing`)
 	})
 
@@ -135,6 +134,47 @@ value: MyThing`)
 value: MyThing
 	<class>: MyThing
 	name: something else`)
+	})
+
+	it('folding (singlelineLengthMax)', ()=> {
+		const arr = ['a', 'b']
+		arr.someProp = 'test'
+		const arr2 = ['a', 'b']
+		arr2.someProp = 'test'
+		arr2.someMore = 'value'
+		const arr3 = ['a', 'b']
+		arr3.someProp = 'test'
+		arr3.someMore = 'value'
+		arr3.manyMore = 156
+		const o = [
+			{a: {value: 'some', more: {value: 'some', more: {value: 'some'}}}},
+			{a: []},
+			1231,
+			'string',
+			[],
+			arr,
+			arr2,
+			arr3,
+			{some: [1, 2, 4]},
+		]
+		expect(sfo(o, 5)).toBe(`Array
+- Object
+	a: Object
+		value: some
+		more: { value: some, more: { value: some } }
+- { a: {} }
+- 1231
+- string
+- {}
+- { someProp: test }[ a, b ]
+- { someProp: test, someMore: value }
+	- a
+	- b
+- [ a, b ]
+	someProp: test
+	someMore: value
+	manyMore: 156
+- { some: [ 1, 2, 4 ] }`)
 	})
 
 })
