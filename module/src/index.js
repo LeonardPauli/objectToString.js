@@ -20,15 +20,22 @@
 // stringFromObject
 const stringFromObject = (obj, ...opts)=> {
 	const defaultDepth = typeof opts[0]==='number'? opts.shift(): 1
+	const defaultNameField = 'name'
 	const opt = Object.assign({
 		maxObjectStringLength: 100,
-		singlelineLengthMax: 40,
+		singlelineLengthMax: 60,
 		functionsFull: false,
 		listItemIndicator: true,
 		listItemIndicatorIndex: 10, // true | false | minNr
 		indentation: '\t',
-		filter: null, // ({key, value, name, enumerable, parent})=> true
-		nameExtractor: null, // obj=> obj.mySpecialKey or null to continue as usual,
+		alignValuesLeftColumnMinWidth: 0, // eg. 40 to enforce min left column char width
+		
+		filter: ({key, value, name, enumerable, parent})=> !(key===defaultNameField && name === value),
+		nameExtractor: o=> {
+			const objOrFunc = typeof o === 'object' || typeof o === 'function'
+			return objOrFunc && typeof o[defaultNameField] === 'string' && o[defaultNameField]
+		},
+
 		colors: false,
 		// changing:
 		itemsToCollapse: [],
@@ -50,17 +57,26 @@ const stringFromObject = (obj, ...opts)=> {
 	const expandLimitReached = opt.depth==0 || !isObject || opt.collapse || !obj
 	if (expandLimitReached) return valueFinal(obj, opt)
 
+	return getFinalObjText(obj, opt)
+}
+
+const getFinalObjText = (obj, opt)=> {
 	const name = getObjectName(obj, opt)
-	const {singleLine, lines} = fixForPropertyNames(obj, opt, name)
+	const {singleLine, lines} = fixForPropertyNames(obj, opt, opt.cwStrip(name))
 	const nameLimited = limitStr(opt.maxObjectStringLength)(name.replace(/(\n|\t| )+/g, ' '))
 	const useSingleline = singleLine.length
 	const linesStr = lines.length? '\n'+lines.join('\n'): ''
 	const noContent = singleLine.length + linesStr.length === 0
 	if (noContent && nameLimited==='Object') return opt.cw(2)('{}')
-	if (noContent && nameLimited==='Array') return opt.cw(2)('{}')
+	if (noContent && nameLimited==='Array') return opt.cw(2)('[]')
 	const nameNode = ['Object', 'Array'].includes(nameLimited)
 	const nameSkip = nameNode && useSingleline
-	return (nameSkip?'':nameNode?opt.cw(2)(name):name) + singleLine + linesStr
+	const isRegex = obj && obj instanceof RegExp
+	const title = isRegex ? opt.cw(c.c.d)(obj.toString())
+		: nameSkip ? ''
+		: nameNode ? opt.cw(2)(name)
+		: name
+	return title + singleLine + linesStr
 }
 
 // eslint-disable-next-line no-new-wrappers
@@ -90,6 +106,9 @@ const fixForPropertyNames = (obj, opt, name)=> {
 	const li = lines.filter(({isListItem})=> isListItem)
 	if (Array.isArray(obj) && obj.length===li.length)
 		lines.splice(lines.findIndex(({k})=> k==='length'), 1)
+	const isRegex = obj && obj instanceof RegExp
+	if (isRegex && obj.lastIndex===0)
+		lines.splice(lines.findIndex(({k})=> k==='lastIndex'), 1)
 	const ni = lines.filter(({isListItem})=> !isListItem)
 
 	const niSingleLine = ni
@@ -106,18 +125,30 @@ const fixForPropertyNames = (obj, opt, name)=> {
 	const niu = !niw.includes('\n') && nic < singlelineLengthMax
 	const liu = !liw.includes('\n') && lic < singlelineLengthMax - (niu?nic:0)
 
+	const linesParts = lines.filter(({isListItem})=> isListItem?!liu:!niu)
+		.map(({isListItem, k, color, content,
+			listItemIndicatorIndexShow = isListItem && (listItemIndicatorIndex===true || (
+				listItemIndicatorIndex!==false && parseInt(k, 10) >= listItemIndicatorIndex)),
+		}, i)=> [prefix + (isListItem
+			? opt.cw(c.c)(`${listItemIndicator?'- ':''}${listItemIndicatorIndexShow?k:''}`)
+			: opt.cw(color)(k)
+		) + opt.cw(2)(isListItem&&!listItemIndicatorIndexShow?'':': '), content])
+
+	const linesLeftMaxLength = opt.alignValuesLeftColumnMinWidth
+	// TODO: option to use automatic?
+	// 	linesParts.map(([s])=> s.length).reduce((a, b)=> Math.max(a, b), 0)
+
 	return {
 		singleLine: (niu?niw:'')+(liu?liw:''),
-		lines: lines.filter(({isListItem})=> isListItem?!liu:!niu)
-			.map(({isListItem, k, color, content,
-				listItemIndicatorIndexShow = isListItem && (listItemIndicatorIndex===true || (
-					listItemIndicatorIndex!==false && parseInt(k, 10) >= listItemIndicatorIndex)),
-			}, i)=> prefix + (isListItem
-				? opt.cw(c.c)(`${listItemIndicator?'- ':''}${listItemIndicatorIndexShow?k:''}`)
-				: opt.cw(color)(k)
-			) + opt.cw(2)(isListItem&&!listItemIndicatorIndexShow?'':': ') + content),
+		lines: linesLeftMaxLength
+			// TODO: should probably use cwStrip to get correct
+			? linesParts.map(([l, r])=> strpadr(l, linesLeftMaxLength, ' ')+r)
+			: linesParts.map(([l, r])=> l+r),
 	}
 }
+
+const range = n=> Array(Math.max(n || 0, 0)).fill().map((_, i)=> i)
+const strpadr = (s, n, c)=> s+range(n - s.length).map(_=> c).join('')
 
 
 // valueFinal
@@ -133,7 +164,7 @@ const primitiveFix = (o, {cw})=> typeof o === 'number' || typeof o === 'boolean'
 	? cw(33)(String(o)) : null
 
 const stringFix = (o, {prefix, cw})=> typeof o === 'string'
-	? cw(32)(o.replace(/\n/g, '\n'+prefix)) : null
+	? cw(2)('"') + cw(32)(o.replace(/\n/g, '\n'+prefix)) + cw(2)('"'): null
 
 const functionFix = (o, {cw, functionsFull})=> typeof o === 'function'
 	? cw(36)(functionsFull?o+'':(o+'')
@@ -164,11 +195,12 @@ const objectFix = (obj, opt)=> {
 }
 
 
-const getObjectName = (o, {nameExtractor} = {})=> {
+const getObjectName = (o, {nameExtractor, cw} = {})=> {
 	const objOrFunc = typeof o == 'object' || typeof o == 'function'
-	return (nameExtractor && nameExtractor(o))
+	const nameExtracted = nameExtractor && nameExtractor(o)
+	return (nameExtracted && cw(c.w)(nameExtracted))
+		|| (typeof o === 'symbol' && o.toString() && `Symbol(${cw(c.w)(o.toString().replace(/^Symbol\((.*)\)$/g, '$1'))})`)
 		|| (o.toString === [].toString && 'Array')
-		|| (objOrFunc && typeof o.name == 'string' && o.name)
 		|| (objOrFunc && o.constructor && typeof o.constructor.name == 'string' && o.constructor.name)
 		|| (o.toString && o.toString())
 		|| typeof o
@@ -181,9 +213,12 @@ const colorWrap = (c = false)=> s=> c===false? s: `\x1b[${c}m${s}\x1b[0m`
 
 // export
 export default stringFromObject
-export const log = (obj, ...opts)=> console.log(stringFromObject(obj, {
-	indentation: '\t',
-	colors: true,
-	depth: typeof opts[0]==='number'? opts.shift(): 5,
-	...opts.shift() || {}}
-))
+
+export const custom = optsDefault=> (obj, ...opts)=> stringFromObject(obj, {
+	...optsDefault,
+	depth: typeof opts[0]==='number'? opts.shift(): optsDefault.depth || 5,
+	...opts.shift() || {}})
+
+export const log = (obj, ...opts)=> console.log(custom({
+	indentation: '  ', colors: true,
+})(obj, ...opts))
