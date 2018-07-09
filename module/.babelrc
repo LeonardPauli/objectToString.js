@@ -1,10 +1,21 @@
 {
 	"presets": [
-		["@vue/app", { targets: { node: "current" }, modules: "commonjs" }]
+    ["@babel/preset-env", {
+      "modules": "commonjs",
+      "targets": { "node": "current" },
+      "useBuiltIns": "usage",
+    }],
+    ["@babel/preset-stage-2", {
+      "useBuiltIns": true,
+      "decoratorsLegacy": true
+    }]
   ],
 	"plugins": [
+    ["@babel/plugin-transform-runtime", {
+      "polyfill": false,
+      "regenerator": false,
+    }],
 		"@babel/plugin-proposal-function-bind",
-		"@babel/plugin-proposal-pipeline-operator",
 		["@babel/plugin-proposal-decorators", { "legacy": true }],
 		["@babel/plugin-proposal-class-properties", { "loose": true }]
 	]
