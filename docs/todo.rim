@@ -17,3 +17,4 @@
 	// - rename to object-to-string + move to app/node/module
 	// - commit + npm republish (inc tag etc, create script?) // + using scope, nah
 	
+// use "fsevents": "^1.2.4" for node 10	
